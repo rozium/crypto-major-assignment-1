@@ -4,8 +4,8 @@ class LSB:
 
   def __init__(self):
     self.cover_object = None
-    self.stego_object_type = "video" # ["video", "audio"]
     self.message = None
+    self.stego_object_type = "video" # ["video", "audio"]
     self.stego_object = None
     self.stego_key = None
     self.stego_object_path = "../example/avi/drop.avi"
@@ -14,9 +14,9 @@ class LSB:
     vidcap = cv2.VideoCapture(self.stego_object_path)
     success,image = vidcap.read()
     count = 0
-    self.stego_object = []
+    self.cover_object = []
     while success:
-      self.stego_object.append(image)
+      self.cover_object.append(image)
       success,image = vidcap.read()
       count += 1
-    # self.stego_object contains array of image (rgb)
+    # self.cover_object contains array of image (rgb)
