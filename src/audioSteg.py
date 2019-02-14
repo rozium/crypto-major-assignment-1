@@ -1,20 +1,5 @@
 #!/usr/bin/env python
 
-# TODO: Serve using Flask
-'''
-from flask import Flask, jsonify
-
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-  return jsonify({'test': 'lol'})
-
-if __name__ == '__main__':
-  app.run(debug=True)
-'''
-
-
 # Audio Steganography
 
 import wave
