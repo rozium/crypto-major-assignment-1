@@ -2,15 +2,17 @@ import lsb, random
 import numpy as np
 
 lsb_stego = lsb.LSB()
-lsb_stego.frame_store_mode = lsb.SHUFFLE
-lsb_stego.pixel_store_mode = lsb.SHUFFLE
-lsb_stego.key = "jangan dikasih tau"
-lsb_stego.generate_stego_key()
 
 # default lsb config
 # lsb bit = 1
 # frame mode = sequence
 # pixel mode = sequence
+# encryption = True
+lsb_stego.frame_store_mode = lsb.SHUFFLE
+lsb_stego.pixel_store_mode = lsb.SHUFFLE
+lsb_stego.lsb_bit_size = 2
+lsb_stego.key = "jangan dikasih tau"
+lsb_stego.generate_stego_key()
 
 # load cover object
 lsb_stego.cover_object_path = "static/example/avi/drop.avi"

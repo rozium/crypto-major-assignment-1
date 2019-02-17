@@ -122,6 +122,10 @@ class LSB:
     # self.message contains bits (0 or 1) string of message
     self.message = stego_info + format(format_file_bytes_needed, '08b') + format_file_as_bit + format(message_len_bytes_needed, '08b') + message_len_as_bit + content
 
+    # encrypt message
+    # if self.is_message_encrypted:
+      # self.message = encrypt(self.message)
+
   def __stego_frame_to_png(self):
     # save self.stego_object (contains message) as png files that will be converted to video
     unique_dirname = '../tmp/' + str(uuid.uuid4())
@@ -164,6 +168,7 @@ class LSB:
   def __set_bit(self, val, index, x):
     # helper function
     # Set the index:th bit of val to x and return the new value.
+    # index = 0 for LSB
     mask = 1 << index
     val &= ~mask
     if x:
@@ -171,7 +176,6 @@ class LSB:
     return val 
 
   def put_message(self):
-    # TODO: 2 bits LSB, save message length & format
     # put message to self.cover_object and save to self.stego_object
 
     self.stego_object = np.copy(self.cover_object)
@@ -199,6 +203,10 @@ class LSB:
           for idx_col in col_idx_arr:
             for i in range(0, 3): #rgb channel
               if idx_msg < len(self.message):
+                if self.lsb_bit_size == 2 and (len(self.message) - idx_msg >= 2):
+                  # lsb 2 bits
+                  self.stego_object[idx_frame][idx_row][idx_col][i] = self.__set_bit(self.stego_object[idx_frame][idx_row][idx_col][i], 1, int(self.message[idx_msg]))
+                  idx_msg += 1
                 self.stego_object[idx_frame][idx_row][idx_col][i] = self.__set_bit(self.stego_object[idx_frame][idx_row][idx_col][i], 0, int(self.message[idx_msg]))
                 idx_msg += 1
               else:
@@ -212,7 +220,8 @@ class LSB:
 
   def get_message(self):
     # TODO: extract & use stego info, format & message length
-    # TODO: 2 bits LSB
+    # TODO: decrypt message
+    # TODO: save as file
     # extract message form self.stego_object
     result = ''
 
@@ -240,6 +249,10 @@ class LSB:
           for idx_col in col_idx_arr:
             for i in range(0, 3): #rgb channel
               if idx_msg < len(self.message):
+                if self.lsb_bit_size == 2 and (len(self.message) - idx_msg >= 2):
+                  # lsb 2 bits
+                  result += str((self.stego_object[idx_frame][idx_row][idx_col][i] >> 1) & 1)
+                  idx_msg += 1
                 result += str(self.stego_object[idx_frame][idx_row][idx_col][i] & 1)
                 idx_msg += 1
               else:
@@ -250,6 +263,10 @@ class LSB:
             break
         if idx_msg >= len(self.message):
           break
+
+    # decrypt message
+    # if self.is_message_encrypted:
+      # result = decrypt(result)
 
     return result
 
