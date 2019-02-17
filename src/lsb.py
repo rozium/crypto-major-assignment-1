@@ -1,11 +1,15 @@
 import numpy as np
 import ffmpeg, os, uuid, shutil, subprocess
 from PIL import Image
+from math import log
+
+SEQUENTIAL = 0
+SHUFFLE = 1
 
 class LSB:
   def __init__(self):
     self.cover_object = None
-    self.cover_object_fps = 0
+    # self.cover_object_fps = 0
     self.cover_object_path = "../example/avi/drop.avi"
     self.stego_object_type = "video" # ["video", "audio"]
     self.stego_object = None
@@ -14,7 +18,11 @@ class LSB:
     self.png_frame_path = "../tmp"
     self.message = None
     self.message_path = "../example/message/msg.txt"
+    # stego info
     self.lsb_bit_size = 1 # [1, 2]
+    self.frame_store_mode = SEQUENTIAL
+    self.pixel_store_mode = SEQUENTIAL
+    self.is_message_encrypted = True
 
   def load_object(self, object_type):
     # load cover / stego object video and save to self.cover_object / self.stego_object as array of image (rgb)
@@ -57,19 +65,61 @@ class LSB:
     return self.lsb_bit_size * len(self.cover_object) * self.cover_object[0].shape[0] * self.cover_object[0].shape[1] * self.cover_object[0].shape[2]
 
   def load_message(self):
-    # get string of bit from message file and save to self.message
+    # (1) get stego info (frame, pixel, encrypt, LSB size)
+    # stego mode info (4 bits) : [frame, pixel, encrypt, LSB size]
+    # frame => 0 : sequential, 1 : shuffle
+    # pixel => 0 : sequential, 1 : shuffle
+    # encrypt => 0 : not encrypted, 1 : encrypted
+    # LSB size => 0 : 1 bit, 1 : 2 bits
+    # (2) get format (how many bytes needed to store + length of message in binary) and length of message (how many bytes needed to store + length of message in binary)
+    # format : (1 + m) bytes, length of message : (1 + n) bytes
+    # (3) get string of bit from message file content
+    # (4) append all of (1), (2), (3) and save to self.message
 
     # open file
     with open(self.message_path, mode='rb') as file:
       file_content = file.read()
 
     # read as 8 bits per character
-    result = ''
+    content = ''
     for c in file_content:
-      result += format(ord(c), '08b')
+      content += format(ord(c), '08b')
+
+    # get length of message & byte size
+    message_len = len(file_content)
+    message_len_bytes_needed = int(log(message_len, 256)) + 1
+    message_len_as_bit = ("{0:0" + str(message_len_bytes_needed*8) +"b}").format(message_len)
+
+    # get format message file
+    format_file = self.message_path.split('.')[-1]
+    format_file_bytes_needed = len(format_file)
+    format_file_as_bit = ''
+    for c in format_file:
+      format_file_as_bit += format(ord(c), '08b')
+
+    # get stego info
+    stego_info = ''
+    if self.frame_store_mode == SHUFFLE:
+      stego_info += '1'
+    else:
+      stego_info += '0'
+    if self.pixel_store_mode == SHUFFLE:
+      stego_info += '1'
+    else:
+      stego_info += '0'
+    if self.is_message_encrypted:
+      stego_info += '1'
+    else:
+      stego_info += '0'
+    if self.lsb_bit_size == 2 :
+      stego_info += '1'
+    else:
+      stego_info += '0'
+
+    print content
     
     # self.message contains bits (0 or 1) string of message
-    self.message = result
+    self.message = stego_info + format(format_file_bytes_needed, '08b') + format_file_as_bit + format(message_len_bytes_needed, '08b') + message_len_as_bit + content
 
   def __stego_frame_to_png(self):
     # save self.stego_object (contains message) as png files that will be converted to video
