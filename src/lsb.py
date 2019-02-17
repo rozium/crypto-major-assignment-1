@@ -1,5 +1,5 @@
 import numpy as np
-import ffmpeg, os, uuid, shutil, subprocess
+import ffmpeg, os, uuid, shutil, subprocess, random
 from PIL import Image
 from math import log
 
@@ -18,6 +18,8 @@ class LSB:
     self.png_frame_path = "../tmp"
     self.message = None
     self.message_path = "../example/message/msg.txt"
+    self.key = "KEY"
+    self.stego_key = 0
     # stego info
     self.lsb_bit_size = 1 # [1, 2]
     self.frame_store_mode = SEQUENTIAL
@@ -75,6 +77,7 @@ class LSB:
     # format : (1 + m) bytes, length of message : (1 + n) bytes
     # (3) get string of bit from message file content
     # (4) append all of (1), (2), (3) and save to self.message
+    # TODO: encrypt message
 
     # open file
     with open(self.message_path, mode='rb') as file:
@@ -115,8 +118,6 @@ class LSB:
       stego_info += '1'
     else:
       stego_info += '0'
-
-    print content
     
     # self.message contains bits (0 or 1) string of message
     self.message = stego_info + format(format_file_bytes_needed, '08b') + format_file_as_bit + format(message_len_bytes_needed, '08b') + message_len_as_bit + content
@@ -150,23 +151,55 @@ class LSB:
     # delete unused dir / png files
     shutil.rmtree(self.png_frame_path)
 
+  def generate_stego_key(self):
+    count = 0
+    self.stego_key = 0
+    for k in self.key:
+      if count % 2 == 1:
+        self.stego_key += ord(k)
+      count +=1
+
+    self.stego_key = int(self.stego_key / len(self.key))
+
+  def __set_bit(self, val, index, x):
+    # helper function
+    # Set the index:th bit of val to x and return the new value.
+    mask = 1 << index
+    val &= ~mask
+    if x:
+      val |= mask
+    return val 
+
   def put_message(self):
-    # TODO: suffle mode & 2 bits LSB, save message length & format
+    # TODO: 2 bits LSB, save message length & format
     # put message to self.cover_object and save to self.stego_object
+
     self.stego_object = np.copy(self.cover_object)
+    random.seed(self.stego_key)
+    count_frames = len(self.stego_object)
+    count_rows_per_frame = len(self.stego_object[0])
+    count_cols_per_frame = len(self.stego_object[0][0])
+      
+    if self.frame_store_mode == SHUFFLE:
+      frame_idx_arr = np.asarray(random.sample(range(count_frames), count_frames))
+    else:
+      frame_idx_arr = np.arange(0, count_frames, 1)
+
+    if self.pixel_store_mode == SHUFFLE:
+      row_idx_arr = np.asarray(random.sample(range(count_rows_per_frame), count_rows_per_frame))
+      col_idx_arr = np.asarray(random.sample(range(count_cols_per_frame), count_cols_per_frame))
+    else:
+      row_idx_arr = np.arange(0, count_rows_per_frame, 1)
+      col_idx_arr = np.arange(0, count_cols_per_frame, 1)
+
     idx_msg = 0
     while idx_msg < len(self.message):
-      for idx_img, image in enumerate(self.stego_object):
-        for idx_row, row in enumerate(image):
-          for idx_col, col in enumerate(row):
+      for idx_frame in frame_idx_arr:
+        for idx_row in row_idx_arr:
+          for idx_col in col_idx_arr:
             for i in range(0, 3): #rgb channel
               if idx_msg < len(self.message):
-                if self.message[idx_msg] == '1':
-                  if self.stego_object[idx_img][idx_row][idx_col][i] % 2 == 0:
-                    self.stego_object[idx_img][idx_row][idx_col][i] += 1
-                else:
-                  if self.stego_object[idx_img][idx_row][idx_col][i] % 2 == 1:
-                    self.stego_object[idx_img][idx_row][idx_col][i] -= 1
+                self.stego_object[idx_frame][idx_row][idx_col][i] = self.__set_bit(self.stego_object[idx_frame][idx_row][idx_col][i], 0, int(self.message[idx_msg]))
                 idx_msg += 1
               else:
                 break
@@ -178,17 +211,36 @@ class LSB:
           break
 
   def get_message(self):
-    # TODO: suffle mode & 2 bits LSB, save message length & format
+    # TODO: extract & use stego info, format & message length
+    # TODO: 2 bits LSB
     # extract message form self.stego_object
     result = ''
+
+    random.seed(self.stego_key)
+    count_frames = len(self.stego_object)
+    count_rows_per_frame = len(self.stego_object[0])
+    count_cols_per_frame = len(self.stego_object[0][0])
+      
+    if self.frame_store_mode == SHUFFLE:
+      frame_idx_arr = np.asarray(random.sample(range(count_frames), count_frames))
+    else:
+      frame_idx_arr = np.arange(0, count_frames, 1)
+
+    if self.pixel_store_mode == SHUFFLE:
+      row_idx_arr = np.asarray(random.sample(range(count_rows_per_frame), count_rows_per_frame))
+      col_idx_arr = np.asarray(random.sample(range(count_cols_per_frame), count_cols_per_frame))
+    else:
+      row_idx_arr = np.arange(0, count_rows_per_frame, 1)
+      col_idx_arr = np.arange(0, count_cols_per_frame, 1)
+
     idx_msg = 0
     while idx_msg < len(self.message):
-      for idx_img, image in enumerate(self.stego_object):
-        for idx_row, row in enumerate(image):
-          for idx_col, col in enumerate(row):
+      for idx_frame in frame_idx_arr:
+        for idx_row in row_idx_arr:
+          for idx_col in col_idx_arr:
             for i in range(0, 3): #rgb channel
               if idx_msg < len(self.message):
-                result += str(self.stego_object[idx_img][idx_row][idx_col][i] & 1)
+                result += str(self.stego_object[idx_frame][idx_row][idx_col][i] & 1)
                 idx_msg += 1
               else:
                 break

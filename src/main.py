@@ -1,7 +1,11 @@
-import lsb
+import lsb, random
 import numpy as np
 
 lsb_stego = lsb.LSB()
+lsb_stego.frame_store_mode = lsb.SHUFFLE
+lsb_stego.pixel_store_mode = lsb.SHUFFLE
+lsb_stego.key = "jangan dikasih tau"
+lsb_stego.generate_stego_key()
 
 # default lsb config
 # lsb bit = 1
@@ -28,3 +32,5 @@ lsb_stego.load_object("stego")
 
 # get hidden message
 print lsb_stego.get_message()
+print lsb_stego.message
+# kalo sama berarti bener
