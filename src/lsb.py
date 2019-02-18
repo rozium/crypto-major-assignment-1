@@ -1,11 +1,10 @@
 import numpy as np
 import ffmpeg, os, uuid, shutil, subprocess, random
 from PIL import Image
-from math import log
+from math import log, log10, sqrt
 
 SEQUENTIAL = 0
 SHUFFLE = 1
-
 class LSB:
   def __init__(self):
     # cover object related
@@ -335,4 +334,16 @@ class LSB:
     f.write(result)
     f.close()
 
-    
+  def calculate_psnr(self):
+    # calculate psnr between stego_object and cover_object
+    sum_psnr = 0
+    for idx_frame, stego_frame in enumerate(self.stego_object):
+      cover_frame = self.cover_object[idx_frame]
+      rms = np.mean( (stego_frame - cover_frame) ** 2 )
+      if rms == 0:
+        sum_psnr += 100
+      else:
+        pixel_max = 255.0
+        sum_psnr += 20 * log10(pixel_max / sqrt(rms))
+
+    return sum_psnr / len(self.stego_object)

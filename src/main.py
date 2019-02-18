@@ -29,6 +29,8 @@ if success:
   # save cover object to video
   lsb_stego.stego_object_path = "static/example/avi/output.avi"
   lsb_stego.save_stego_object()
+  # display psnr
+  print "[LOG] psnr :", lsb_stego.calculate_psnr(), "dB"
 else:
   print "[ERROR] message size > capacity"
 
