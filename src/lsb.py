@@ -23,6 +23,8 @@ class LSB:
     self.message_path = "../example/message/msg.txt"
     self.message_length = 0
     self.message_file_format = ""
+    self.message_output_path = "../example/message/"
+    self.message_output_filename = "output"
     # key related
     self.key = "KEY"
     self.stego_key = 0
@@ -300,8 +302,7 @@ class LSB:
 
   def get_message(self):
     # TODO: decrypt message
-    # TODO: save as file
-    # extract message form self.stego_object
+    # extract message form self.stego_object and save as file
 
     # extract additional message first
     used_pixel = self.__extract_additional_message()
@@ -317,6 +318,10 @@ class LSB:
     # if self.is_message_encrypted:
       # result = decrypt(result)
 
-    return result
+    # save as file
+    filepath = self.message_output_path + self.message_output_filename + "." + self.message_file_format
+    f = open(filepath, 'wb')
+    f.write(result)
+    f.close()
 
     
