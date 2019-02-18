@@ -227,8 +227,6 @@ class LSB:
                     self.stego_object[idx_frame][idx_row][idx_col][i] = self.__set_bit(self.stego_object[idx_frame][idx_row][idx_col][i], 1, int(message[idx_msg]))
                   else: # mode == "get"
                     message_result += str((self.stego_object[idx_frame][idx_row][idx_col][i] >> 1) & 1)
-                  # if is_additional:
-                  #   used_pixel_return.append((idx_frame, idx_row, idx_col))
                   idx_msg += 1
                 if mode == "insert":
                   self.stego_object[idx_frame][idx_row][idx_col][i] = self.__set_bit(self.stego_object[idx_frame][idx_row][idx_col][i], 0, int(message[idx_msg]))

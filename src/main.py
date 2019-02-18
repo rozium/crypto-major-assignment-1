@@ -23,7 +23,6 @@ lsb_stego.message_path = "static/example/message/msg.png"
 lsb_stego.load_message()
 
 # put message to cover object
-# TODO: check size
 success = lsb_stego.put_message()
 if success:
   print "[STATUS] message size OK"
