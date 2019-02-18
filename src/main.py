@@ -34,5 +34,4 @@ lsb_stego.load_object("stego")
 
 # get hidden message
 print lsb_stego.get_message()
-print lsb_stego.message
-# kalo sama berarti bener
+print "format:", lsb_stego.message_file_format

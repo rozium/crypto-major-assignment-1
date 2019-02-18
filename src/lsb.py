@@ -8,19 +8,25 @@ SHUFFLE = 1
 
 class LSB:
   def __init__(self):
+    # cover object related
     self.cover_object = None
-    # self.cover_object_fps = 0
     self.cover_object_path = "../example/avi/drop.avi"
+    # stego object related
     self.stego_object_type = "video" # ["video", "audio"]
     self.stego_object = None
     self.stego_key = None
     self.stego_object_path = "../example/avi/output.avi"
     self.png_frame_path = "../tmp"
-    self.message = None
+    # message related
+    self.message = ""
+    self.additional_message = ""
     self.message_path = "../example/message/msg.txt"
+    self.message_length = 0
+    self.message_file_format = ""
+    # key related
     self.key = "KEY"
     self.stego_key = 0
-    # stego info
+    # stego info related
     self.lsb_bit_size = 1 # [1, 2]
     self.frame_store_mode = SEQUENTIAL
     self.pixel_store_mode = SEQUENTIAL
@@ -75,13 +81,17 @@ class LSB:
     # LSB size => 0 : 1 bit, 1 : 2 bits
     # (2) get format (how many bytes needed to store + length of message in binary) and length of message (how many bytes needed to store + length of message in binary)
     # format : (1 + m) bytes, length of message : (1 + n) bytes
-    # (3) get string of bit from message file content
-    # (4) append all of (1), (2), (3) and save to self.message
+    # (3) get string of bit from message file content and save to self.message
+    # (4) append (1) and (2) and save to self.additional_message
     # TODO: encrypt message
 
     # open file
     with open(self.message_path, mode='rb') as file:
       file_content = file.read()
+
+    # encrypt message
+    # if self.is_message_encrypted:
+      # file_content = encrypt(file_content)
 
     # read as 8 bits per character
     content = ''
@@ -119,12 +129,11 @@ class LSB:
     else:
       stego_info += '0'
     
-    # self.message contains bits (0 or 1) string of message
-    self.message = stego_info + format(format_file_bytes_needed, '08b') + format_file_as_bit + format(message_len_bytes_needed, '08b') + message_len_as_bit + content
+    # self.message contains bits (0 or 1) string of message content
+    self.message = content
 
-    # encrypt message
-    # if self.is_message_encrypted:
-      # self.message = encrypt(self.message)
+    # self.additional_message contains bits (0 or 1) string of stego info, format & message length representation
+    self.additional_message = stego_info + format(format_file_bytes_needed, '08b') + format(message_len_bytes_needed, '08b') + format_file_as_bit + message_len_as_bit
 
   def __stego_frame_to_png(self):
     # save self.stego_object (contains message) as png files that will be converted to video
@@ -144,7 +153,6 @@ class LSB:
     self.__stego_frame_to_png()
 
     # convert to video
-    # height, width, layers = self.cover_object[0].shape
     command = [ 'ffmpeg',
         '-y',
         '-i', self.png_frame_path + "/frame%d.png",
@@ -175,94 +183,135 @@ class LSB:
       val |= mask
     return val 
 
-  def put_message(self):
-    # put message to self.cover_object and save to self.stego_object
+  def __msg_operation_stego_object(self, mode, is_additional, message = '', used_pixel = []):
+    # mode in ['insert', 'get']
 
-    self.stego_object = np.copy(self.cover_object)
     random.seed(self.stego_key)
     count_frames = len(self.stego_object)
     count_rows_per_frame = len(self.stego_object[0])
     count_cols_per_frame = len(self.stego_object[0][0])
-      
-    if self.frame_store_mode == SHUFFLE:
-      frame_idx_arr = np.asarray(random.sample(range(count_frames), count_frames))
-    else:
-      frame_idx_arr = np.arange(0, count_frames, 1)
 
-    if self.pixel_store_mode == SHUFFLE:
-      row_idx_arr = np.asarray(random.sample(range(count_rows_per_frame), count_rows_per_frame))
-      col_idx_arr = np.asarray(random.sample(range(count_cols_per_frame), count_cols_per_frame))
-    else:
-      row_idx_arr = np.arange(0, count_rows_per_frame, 1)
-      col_idx_arr = np.arange(0, count_cols_per_frame, 1)
+    frame_idx_arr = np.arange(0, count_frames, 1)
+    row_idx_arr = np.arange(0, count_rows_per_frame, 1)
+    col_idx_arr = np.arange(0, count_cols_per_frame, 1)
 
+    if not is_additional:
+      if self.frame_store_mode == SHUFFLE:
+        frame_idx_arr = np.asarray(random.sample(range(count_frames), count_frames))
+
+      if self.pixel_store_mode == SHUFFLE:
+        row_idx_arr = np.asarray(random.sample(range(count_rows_per_frame), count_rows_per_frame))
+        col_idx_arr = np.asarray(random.sample(range(count_cols_per_frame), count_cols_per_frame))
+
+    used_pixel_return = []
+    message_result = ''
     idx_msg = 0
-    while idx_msg < len(self.message):
+    if mode == "insert":
+      message_length = len(message)
+    else: # mode == "get"
+      if is_additional:
+        message_length = 20 # stego info (4 bits) + format_file_bytes_needed (8 bits) + message_len_bytes_needed (8 bits)
+      else:
+        message_length = self.message_length
+    while idx_msg < message_length:
       for idx_frame in frame_idx_arr:
         for idx_row in row_idx_arr:
           for idx_col in col_idx_arr:
             for i in range(0, 3): #rgb channel
-              if idx_msg < len(self.message):
-                if self.lsb_bit_size == 2 and (len(self.message) - idx_msg >= 2):
+              if idx_msg < message_length and (idx_frame, idx_row, idx_col, i) not in used_pixel:
+                if not is_additional and self.lsb_bit_size == 2 and (message_length - idx_msg >= 2):
                   # lsb 2 bits
-                  self.stego_object[idx_frame][idx_row][idx_col][i] = self.__set_bit(self.stego_object[idx_frame][idx_row][idx_col][i], 1, int(self.message[idx_msg]))
+                  if mode == "insert":
+                    self.stego_object[idx_frame][idx_row][idx_col][i] = self.__set_bit(self.stego_object[idx_frame][idx_row][idx_col][i], 1, int(message[idx_msg]))
+                  else: # mode == "get"
+                    message_result += str((self.stego_object[idx_frame][idx_row][idx_col][i] >> 1) & 1)
+                  # if is_additional:
+                  #   used_pixel_return.append((idx_frame, idx_row, idx_col))
                   idx_msg += 1
-                self.stego_object[idx_frame][idx_row][idx_col][i] = self.__set_bit(self.stego_object[idx_frame][idx_row][idx_col][i], 0, int(self.message[idx_msg]))
+                if mode == "insert":
+                  self.stego_object[idx_frame][idx_row][idx_col][i] = self.__set_bit(self.stego_object[idx_frame][idx_row][idx_col][i], 0, int(message[idx_msg]))
+                else: # mode == "get"
+                  message_result += str(self.stego_object[idx_frame][idx_row][idx_col][i] & 1)
+                  if is_additional and (idx_msg == 19):
+                    # add message length with format_file_bytes_needed (in bit) + message_len_bytes_needed (in bit)
+                    format_file_bytes_needed = int(message_result[4:-8], 2)
+                    message_len_bytes_needed = int(message_result[-8:], 2)
+                    message_length += format_file_bytes_needed*8 + message_len_bytes_needed*8
+                if is_additional:
+                  used_pixel_return.append((idx_frame, idx_row, idx_col, i))
                 idx_msg += 1
               else:
                 break
-            if idx_msg >= len(self.message):
+            if idx_msg >= message_length:
               break
-          if idx_msg >= len(self.message):
+          if idx_msg >= message_length:
             break
-        if idx_msg >= len(self.message):
+        if idx_msg >= message_length:
           break
+    
+    if mode == "insert":
+      if is_additional:
+        return used_pixel_return
+    else: # mode == "get"
+      if is_additional:
+        return used_pixel_return, message_result
+      else: # is_additional == False
+        return message_result
+
+  def put_message(self):
+    # put message to self.cover_object and save to self.stego_object
+    
+    # initialize
+    self.stego_object = np.copy(self.cover_object)
+
+    # put additional_message first
+    used_pixel = self.__msg_operation_stego_object("insert", True, self.additional_message)
+    
+    # put message content
+    self.__msg_operation_stego_object("insert", False, self.message, used_pixel)
+
+  def __extract_additional_message(self):
+    # extract additional message from stego object
+
+    # init
+    used_pixel, additional_message = self.__msg_operation_stego_object("get", True)
+    stego_info = additional_message[:4]
+    format_file_bytes_needed = int(additional_message[4:12], 2)
+    message_len_bytes_needed = int(additional_message[12:20], 2)
+    format_file_as_bit = additional_message[20:20+format_file_bytes_needed*8]
+    message_len_as_bit = additional_message[-1*message_len_bytes_needed*8:]
+
+    # stego info
+    self.frame_store_mode = SHUFFLE if stego_info[0] == '1' else SEQUENTIAL
+    self.pixel_store_mode = SHUFFLE if stego_info[1] == '1' else SEQUENTIAL
+    self.is_message_encrypted = True if stego_info[2] == '1' else False
+    self.lsb_bit_size = 2 if stego_info[3] == '1' else 1
+
+    # message file format
+    self.message_file_format = ""
+    bytes_char = [format_file_as_bit[i:i+8] for i in range(0, len(format_file_as_bit), 8)]
+    for byte in bytes_char:
+      self.message_file_format += chr(int(byte, 2))
+
+    # message content length
+    self.message_length = int(message_len_as_bit, 2)*8
+    
+    return used_pixel
 
   def get_message(self):
-    # TODO: extract & use stego info, format & message length
     # TODO: decrypt message
     # TODO: save as file
     # extract message form self.stego_object
+
+    # extract additional message first
+    used_pixel = self.__extract_additional_message()
+    # extract message content
+    result_as_bits = self.__msg_operation_stego_object("get", False, used_pixel = used_pixel)
+    # convert bits to chars
     result = ''
-
-    random.seed(self.stego_key)
-    count_frames = len(self.stego_object)
-    count_rows_per_frame = len(self.stego_object[0])
-    count_cols_per_frame = len(self.stego_object[0][0])
-      
-    if self.frame_store_mode == SHUFFLE:
-      frame_idx_arr = np.asarray(random.sample(range(count_frames), count_frames))
-    else:
-      frame_idx_arr = np.arange(0, count_frames, 1)
-
-    if self.pixel_store_mode == SHUFFLE:
-      row_idx_arr = np.asarray(random.sample(range(count_rows_per_frame), count_rows_per_frame))
-      col_idx_arr = np.asarray(random.sample(range(count_cols_per_frame), count_cols_per_frame))
-    else:
-      row_idx_arr = np.arange(0, count_rows_per_frame, 1)
-      col_idx_arr = np.arange(0, count_cols_per_frame, 1)
-
-    idx_msg = 0
-    while idx_msg < len(self.message):
-      for idx_frame in frame_idx_arr:
-        for idx_row in row_idx_arr:
-          for idx_col in col_idx_arr:
-            for i in range(0, 3): #rgb channel
-              if idx_msg < len(self.message):
-                if self.lsb_bit_size == 2 and (len(self.message) - idx_msg >= 2):
-                  # lsb 2 bits
-                  result += str((self.stego_object[idx_frame][idx_row][idx_col][i] >> 1) & 1)
-                  idx_msg += 1
-                result += str(self.stego_object[idx_frame][idx_row][idx_col][i] & 1)
-                idx_msg += 1
-              else:
-                break
-            if idx_msg >= len(self.message):
-              break
-          if idx_msg >= len(self.message):
-            break
-        if idx_msg >= len(self.message):
-          break
+    bytes_char = [result_as_bits[i:i+8] for i in range(0, len(result_as_bits), 8)]
+    for byte in bytes_char:
+      result += chr(int(byte, 2))
 
     # decrypt message
     # if self.is_message_encrypted:
