@@ -69,10 +69,10 @@ class LSB:
     else:
       self.stego_object = np.copy(frames)
 
-  def get_payload_size(self):
+  def get_cover_object_capacity(self):
     # get payload size from self.cover_object in bit
-    # lsb_bit_size * number of image * height of image * width of image * 3 pixels (rgb)
-    return self.lsb_bit_size * len(self.cover_object) * self.cover_object[0].shape[0] * self.cover_object[0].shape[1] * self.cover_object[0].shape[2]
+    # lsb_bit_size * number of frame * height of frame * width of frame * 3 pixel channel (rgb)
+    return self.lsb_bit_size * self.cover_object.shape[0] * self.cover_object.shape[1] * self.cover_object.shape[2] * self.cover_object.shape[3]
 
   def load_message(self):
     # (1) get stego info (frame, pixel, encrypt, LSB size)
@@ -268,9 +268,22 @@ class LSB:
 
     # put additional_message first
     used_pixel = self.__msg_operation_stego_object("insert", True, self.additional_message)
-    
-    # put message content
-    self.__msg_operation_stego_object("insert", False, self.message, used_pixel)
+
+    # checking message size and capacity
+    capacity = self.get_cover_object_capacity()
+    additional_message_size = len(self.additional_message) * self.lsb_bit_size
+
+    print "[LOG]", "capacity:", capacity
+    print "[LOG]", "cover object shape:", self.cover_object.shape
+    print "[LOG]", "additional_message_size:", additional_message_size
+    print "[LOG]", "message_size:", len(self.message)
+
+    if capacity - additional_message_size >= len(self.message):
+      # put message content
+      self.__msg_operation_stego_object("insert", False, self.message, used_pixel)
+      return True
+    else:
+      return False
 
   def __extract_additional_message(self):
     # extract additional message from stego object

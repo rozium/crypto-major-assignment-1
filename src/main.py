@@ -23,17 +23,22 @@ lsb_stego.message_path = "static/example/message/msg.png"
 lsb_stego.load_message()
 
 # put message to cover object
-lsb_stego.put_message()
+# TODO: check size
+success = lsb_stego.put_message()
+if success:
+  print "[STATUS] message size OK"
+  # save cover object to video
+  lsb_stego.stego_object_path = "static/example/avi/output.avi"
+  lsb_stego.save_stego_object()
+else:
+  print "[ERROR] message size > capacity"
 
-# save cover object to video
-lsb_stego.stego_object_path = "static/example/avi/output.avi"
-lsb_stego.save_stego_object()
+if success:
+  ############### EXTRACT MESSAGE ###############
+  # load stego object
+  lsb_stego.load_object("stego")
 
-############### EXTRACT MESSAGE ###############
-# load stego object
-lsb_stego.load_object("stego")
-
-# get hidden message and save it
-lsb_stego.message_output_path = "static/example/message/"
-lsb_stego.message_output_filename = "output"
-lsb_stego.get_message()
+  # get hidden message and save it
+  lsb_stego.message_output_path = "static/example/message/"
+  lsb_stego.message_output_filename = "output"
+  lsb_stego.get_message()
