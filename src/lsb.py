@@ -211,7 +211,7 @@ class LSB:
         '-y',
         output_path ]
     retcode = subprocess.call(command)
-    
+
     # delete unused dir / png files
     shutil.rmtree(self.png_frame_path)
 
@@ -228,7 +228,6 @@ class LSB:
       # delete temp video and extracted audio
       os.remove(self.stego_object_temp_path)
       os.remove(self.cover_object_audio_path)
-
 
   def generate_stego_key(self):
     count = 0
@@ -398,6 +397,8 @@ class LSB:
     f = open(filepath, 'wb')
     f.write(result)
     f.close()
+
+    return self.message_output_filename + "." + self.message_file_format, self.message_file_format
 
   def calculate_psnr(self):
     # calculate psnr between stego_object and cover_object

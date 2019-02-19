@@ -67,40 +67,11 @@
       display: none;
     }
 
-    .radioContainer {
-      width: 95%;
-      margin: 2px 10px;
-    }
-
     .subtitle {
       margin-left: 10px;
       margin-top: 20px;
       padding: 3px;
       font-weight: bolder;
-    }
-
-    .radio {
-      margin: 1px;
-      padding: 8px 6px;
-      cursor: pointer;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px 0 rgba(0,0,0,0.2);
-      background-color: #f6e58d;
-    }
-
-    .radio.checked {
-      background-color: #f0932b;
-      color: white;
-    }
-
-    .radio input {
-      position: absolute;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .radio:hover {
-      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
     }
 
     .submit {
@@ -119,6 +90,15 @@
       margin-right: 15px;
     }
 
+    .error {
+      margin: 10px;
+      color: red;
+    }
+
+    #success {
+      width: 100%;
+    }
+
   </style>
 </head>
 <body>
@@ -129,6 +109,7 @@
       </div>
     </div>
     <div class="row">
+
       <form class="form">
         
         <div>
@@ -148,21 +129,24 @@
         </div>
 
         <div class="hidden" id="kunci">
-          <div class="subtitle">Masukkan Kunci <span style="color: grey">(Panjang maksimal 25 karakter)</span></div>
+          <div class="subtitle">Masukkan Kunci <span style="color: grey; font-weight: 100">(Panjang maksimal 25 karakter)</span></div>
           <input type="text" class="form-control" name="kunci" placeholder="secretkey" maxlength="25" />
         </div>
 
-        <input id="submit" type="submit" class="card upload submit hidden" value="Sisipkan Pesan">
+        <input id="submit" type="submit" class="card upload submit hidden" value="Ekstrak Pesan">
 
       </form>
     </div>
 
     <div class="row">
-      <div id="results" class="subtitle">After</div>
       <br /><div id="loading" class="subtitle">Loading...</div>
-      <br /><div id="error" class="subtitle error">Error</div>
-      <img id="result" class="card" src="">
-      <div id="result2" class="subtitle ress"></div>
+      <br /><div id="error" class="error">Error</div>
+      <div id="success">
+        <div id="result" class="subtitle"></div>
+        <div class="download card upload submit">
+          <a id="message-file" style="text-decoration: none; color: white" download">Download Pesan</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -172,10 +156,8 @@
 <script>
   
   $("#loading").hide();
-  $("#results").hide();
-  $("#result").hide();
   $("#error").hide();
-  $("#result2").hide();
+  $("#success").hide();
 
   var loadFile = function(event) {
     document.getElementById('outputbef').classList.remove("hidden");
@@ -185,7 +167,7 @@
     var size = document.getElementById('size');
     name.innerHTML = file.name;
     size.innerHTML = file.size + ' bytes';
-
+    
     $('#icon').attr('src', '/static/icon/' + file.name.split('.').pop() + '.png');
     $('#icon').attr('alt', file.name.split('.').pop());
 
@@ -193,37 +175,52 @@
     document.getElementById('submit').classList.remove("hidden");
   };
 
+  var loadMsg = function(event) {
+    document.getElementById('outputbefmsg').classList.remove("hidden");
+    var file = event.target.files[0];
+    var name = document.getElementById('msg-name');
+    var size = document.getElementById('msg-size');
+    name.innerHTML = file.name;
+    size.innerHTML = file.size + ' bytes';
+
+  };
+
+
   $('#submit').click(function() {
     var formData = new FormData($('form')[0]);
-    console.log(formData);
     $.ajax({
-      url: '/video',
+      url: '/video/extract',
       type: 'POST',
       data: formData,
       processData: false,
       contentType: false,
       beforeSend: function() {
-        $("#results").hide();
-        $("#error").hide();
         $("#loading").show();
+        $("#error").hide();
+        $("#success").hide();
         $("#submit").prop('disabled', true);
       },
       success: function(response) {
-        $("#results").show();
-        $("#loading").hide();
-        $("#error").hide();
+        console.log(response);
         $("#submit").prop('disabled', false);
-        $("#result").show();
-        $('#result').attr('src', JSON.parse(response).url_after);
-        $("#result2").show();
-        $("#result2").text(JSON.parse(response).res);
+        $("#loading").hide();
+
+        if (JSON.parse(response).error) {
+          $("#error").show();
+          $("#error").html('<b>Error:</b> ' + JSON.parse(response).data);
+          $("#success").hide();  
+        } else {
+          $("#error").hide();
+          $("#success").show();
+          $('#message-file').attr('href', JSON.parse(response).msg_file);
+          $('#result').html('File: output.' + JSON.parse(response).msg_ext);
+        }
       },
       error: function(error) {
-        $("#results").show();
-        $("#error").show();
-        $("#loading").hide();
-        $("#result2").hide();
         $("#submit").prop('disabled', false);
+        $("#error").show();
+        $("#success").hide();
+        $("#loading").hide();
       }
     });
   });

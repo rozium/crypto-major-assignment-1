@@ -6,6 +6,8 @@ import os, json
 app = Flask(__name__)
 app.config['ROOT_PATH'] = app.root_path
 
+output_path = '/static/output/'
+
 @app.route("/")
 def main():
     return render_template('index.html')
@@ -39,13 +41,44 @@ def videoGET():
 
 @app.route("/video/extract", methods=['GET'])
 def videoExtractGET():
-    return render_template('video_embed.html')
+    return render_template('video_extract.html')
 
 @app.route("/video/extract", methods=['POST'])
 def videoExtractPOST():
-    if 'imgFile' not in request.files:
-        return json.dumps({'status':'Error1'})
-    return json.dumps({'status':'success'})
+    
+    # check file
+    if 'file' not in request.files:
+        return json.dumps({
+            'error': True,
+            'data': 'Stego Video tidak ditemukan',
+        })
+
+    # save file
+    file = request.files['file']
+    filepath = app.root_path + output_path
+    file.save(filepath + file.filename)
+
+    # extract file
+    lsb_stego = lsb.LSB()
+    lsb_stego.stego_object_path = filepath + file.filename
+
+    # config stego info
+    lsb_stego.key = request.form.get('kunci') or 'secretkey'
+    lsb_stego.generate_stego_key()
+    
+    # load stego object
+    lsb_stego.load_object("stego")
+
+    # get hidden message and save it
+    lsb_stego.message_output_path = filepath
+    lsb_stego.message_output_filename = 'output'
+    msg_file, msg_ext = lsb_stego.get_message()
+
+    return json.dumps({
+        'error': False,
+        'msg_file': output_path + msg_file,
+        'msg_ext': msg_ext
+    })
 
 @app.route("/video/embed", methods=['GET'])
 def videoEmbedGET():
@@ -71,7 +104,7 @@ def videoEmbedPOST():
         })
 
     # check file size
-    filepath = app.root_path + '/static/output/'
+    filepath = app.root_path + output_path
     file.save(filepath + file.filename)
     msg_file.save(filepath + msg_file.filename)
     if os.stat(filepath + msg_file.filename).st_size > os.stat(filepath + file.filename).st_size:
@@ -121,7 +154,7 @@ def videoEmbedPOST():
         'error': False,
         'cover_video_mp4': '/static/example/small.mp4?' + str(time.time()),
         'stego_video_mp4': '/static/example/small.mp4?' + str(time.time()),
-        'stego_video': '/static/output/out_' + file.filename + '?' + str(time.time()),
+        'stego_video': output_path + 'out_' + file.filename + '?' + str(time.time()),
         'psnr': lsb_stego.calculate_psnr(),
     })
 
