@@ -15,7 +15,8 @@ lsb_stego.key = "jangan dikasih tau"
 lsb_stego.generate_stego_key()
 
 # load cover object
-lsb_stego.cover_object_path = "static/example/avi/drop.avi"
+lsb_stego.cover_object_path = "static/example/avi/10.avi"
+lsb_stego.cover_object_audio_path = "static/example/avi/cover.wav"
 lsb_stego.load_object("cover")
 
 # load message
@@ -27,7 +28,8 @@ success = lsb_stego.put_message()
 if success:
   print "[STATUS] message size OK"
   # save cover object to video
-  lsb_stego.stego_object_path = "static/example/avi/output.avi"
+  lsb_stego.stego_object_temp_path = "static/example/avi/output_temp.avi"  
+  lsb_stego.stego_object_path = "static/example/avi/output.avi"  
   lsb_stego.save_stego_object()
   # display psnr
   print "[LOG] psnr :", lsb_stego.calculate_psnr(), "dB"
