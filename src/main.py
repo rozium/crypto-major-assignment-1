@@ -28,7 +28,7 @@ success = lsb_stego.put_message()
 if success:
   print "[STATUS] message size OK"
   # save cover object to video
-  lsb_stego.stego_object_temp_path = "static/example/avi/output_temp.avi"  
+  lsb_stego.stego_object_temp_path = "static/example/avi/output_temp.avi"
   lsb_stego.stego_object_path = "static/example/avi/output.avi"  
   lsb_stego.save_stego_object()
   # display psnr
@@ -45,3 +45,9 @@ if success:
   lsb_stego.message_output_path = "static/example/message/"
   lsb_stego.message_output_filename = "output"
   lsb_stego.get_message()
+
+# convert avi to mp4
+# convert cover object
+lsb_stego.convert_to_mp4("cover", "static/example/avi/cover.mp4")
+# convert stego object
+lsb_stego.convert_to_mp4("stego", "static/example/avi/stego.mp4")

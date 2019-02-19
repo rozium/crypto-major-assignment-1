@@ -1,5 +1,5 @@
 import numpy as np
-import ffmpeg, os, uuid, shutil, subprocess, random
+import ffmpeg, os, uuid, shutil, subprocess, random, vigenere
 from PIL import Image
 from math import log, log10, sqrt
 
@@ -105,15 +105,14 @@ class LSB:
     # format : (1 + m) bytes, length of message : (1 + n) bytes
     # (3) get string of bit from message file content and save to self.message
     # (4) append (1) and (2) and save to self.additional_message
-    # TODO: encrypt message
 
     # open file
     with open(self.message_path, mode='rb') as file:
       file_content = file.read()
 
     # encrypt message
-    # if self.is_message_encrypted:
-      # file_content = encrypt(file_content)
+    if self.is_message_encrypted:
+      file_content = vigenere.encrypt(file_content, self.key)
 
     # read as 8 bits per character
     content = ''
@@ -167,6 +166,19 @@ class LSB:
       image = Image.fromarray(frame)
       image.save(unique_dirname + "/frame%d.png" % count)
       count += 1
+
+  def convert_to_mp4(self, object_type, mp4_path):
+    # helper function, convert avi to mp4 for web player
+    if object_type == "cover":
+      input_path = self.cover_object_path
+    else: # object_type == "stego"
+      input_path = self.stego_object_path
+
+    command = [ 'ffmpeg',
+      '-i', input_path,
+      '-y',
+      mp4_path ]
+    retcode = subprocess.call(command)
 
   def save_stego_object(self):
     # convert self.stego_object to png files (contains message) and convert to video
@@ -347,7 +359,6 @@ class LSB:
     return used_pixel
 
   def get_message(self):
-    # TODO: decrypt message
     # extract message form self.stego_object and save as file
 
     # extract additional message first
@@ -361,8 +372,8 @@ class LSB:
       result += chr(int(byte, 2))
 
     # decrypt message
-    # if self.is_message_encrypted:
-      # result = decrypt(result)
+    if self.is_message_encrypted:
+      result = vigenere.decrypt(result, self.key)
 
     # save as file
     filepath = self.message_output_path + self.message_output_filename + "." + self.message_file_format
