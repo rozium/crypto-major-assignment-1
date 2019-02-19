@@ -355,8 +355,8 @@
           $("#success").show();
           $('#stego-video-download').attr('href', JSON.parse(response).stego_video);
           $("#PSNR").html('Kualitas Video (PSNR): ' + JSON.parse(response).psnr + ' dB');
-          changeSource('cover-video', JSON.parse(response).cover_video_mp4);
-          changeSource('stego-video', JSON.parse(response).stego_video_mp4);
+          changeSource('cv', JSON.parse(response).cover_video_mp4);
+          changeSource('sv', JSON.parse(response).stego_video_mp4);
         }
       },
       error: function(error) {

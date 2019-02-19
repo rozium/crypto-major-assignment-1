@@ -144,6 +144,12 @@ def videoEmbedPOST():
         lsb_stego.save_stego_object()
 
         # TODO: convert video to mp4 for playback
+        # convert cover object
+        cover_mp4 = filepath + file.filename + '.mp4'
+        lsb_stego.convert_to_mp4("cover", cover_mp4)
+        # convert stego object
+        stego_mp4 = filepath + msg_file.filename + '.mp4'
+        lsb_stego.convert_to_mp4("stego", stego_mp4)
     else:
         return json.dumps({
             'error': True,
@@ -152,8 +158,8 @@ def videoEmbedPOST():
 
     return json.dumps({
         'error': False,
-        'cover_video_mp4': '/static/example/small.mp4?' + str(time.time()),
-        'stego_video_mp4': '/static/example/small.mp4?' + str(time.time()),
+        'cover_video_mp4': output_path + file.filename + '.mp4?' + str(time.time()),
+        'stego_video_mp4': output_path + msg_file.filename + '.mp4?' + str(time.time()),
         'stego_video': output_path + 'out_' + file.filename + '?' + str(time.time()),
         'psnr': lsb_stego.calculate_psnr(),
     })
