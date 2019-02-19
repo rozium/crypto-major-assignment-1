@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.bundle.min.js" integrity="sha384-pjaaA8dDz/5BgdFUPX6M/9SUZv4d12SUPF0axWc+VRZkx5xU3daN+lYb49+Ax+Tl" crossorigin="anonymous"></script>
+  <style type="text/css">
+
+    .title {
+      margin: 10px;
+      width: 100%;
+    }
+
+    h3 {
+      text-align: center;
+      padding-top: 6px;
+      padding-bottom: 1px;
+      font-weight: bolder;
+    }
+
+    .form {
+      width: 100%;
+    }
+
+    .card {
+      height: 100%;
+      margin: 10px;
+      margin-bottom: 0px;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+      background-color: white;
+      text-align: -webkit-center;
+    }
+
+    .upload {
+      margin: 5px 10px;
+      transition: 0.3s;
+      background-color: #3498db;
+      height: 35px;
+      cursor: pointer;
+      color: white;
+      padding: 5px;
+    }
+
+    .upload:hover {
+      box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    }
+
+    input[type="text"] {
+      margin: 0 10px;
+      width: 60%;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .info {
+      margin-left: 20px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      display: flex;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .radioContainer {
+      width: 95%;
+      margin: 2px 10px;
+    }
+
+    .subtitle {
+      margin-left: 10px;
+      margin-top: 20px;
+      padding: 3px;
+      font-weight: bolder;
+    }
+
+    .radio {
+      margin: 1px;
+      padding: 8px 6px;
+      cursor: pointer;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px 0 rgba(0,0,0,0.2);
+      background-color: #f6e58d;
+    }
+
+    .radio.checked {
+      background-color: #f0932b;
+      color: white;
+    }
+
+    .radio input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .radio:hover {
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    }
+
+    .submit {
+      font-weight: bolder;
+      font-size: 22px;
+      padding: 2px;
+      height: 40px;
+      background-color: #0be881;
+      margin-top: 20px;
+      width: 95%;
+    }
+    
+    .icons {
+      width: 100px;
+      height: 100px;
+      margin-right: 15px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="title">
+        <h3>Video Steganography</h3>
+      </div>
+    </div>
+    <div class="row">
+      <form class="form">
+        
+        <div>
+          <label class="card upload">
+            <input id="file" type="file" accept=".avi" onchange="loadFile(event)" name="file">
+            Pilih Cover Video
+          </label>
+          <div class="info hidden" id="outputbef">
+            <img src="/static/icon/avi.png" class="icons">
+            <div class="detail">
+              <div class="font-weight-bold">Nama</div>
+              <div id="name"></div>
+              <div class="font-weight-bold mt-2">Ukuran</div>
+              <div id="size"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hidden" id="msg">
+          <label class="card upload">
+            <input id="file" type="file" onchange="loadMsg(event)" name="msg_file">
+            Pilih Pesan
+          </label>
+          <div class="info hidden" id="outputbefmsg">
+            <img id="msg-icon" class="icons">
+            <div class="detail">
+              <div class="font-weight-bold">Nama</div>
+              <div id="msg-name"></div>
+              <div class="font-weight-bold mt-2">Ukuran</div>
+              <div id="msg-size"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hidden" id="lsbit">
+          <div class="subtitle">Pilih Ukuran LSB</div>
+          <div class="radioContainer">
+            <label id="lsbit-radio1" class="radio checked">&nbsp;&nbsp;1 Bit&nbsp;&nbsp;
+              <input type="radio" onclick="check(1, 1)" name="lsbit" value="1" checked="checked">
+            </label>
+            <label id="lsbit-radio2" class="radio">&nbsp;&nbsp;2 Bit&nbsp;&nbsp;
+              <input type="radio" onclick="check(2, 1)" name="lsbit" value="2">
+            </label>
+          </div>
+        </div>
+
+        <div class="hidden" id="enkripsi">
+          <div class="subtitle">Enkripsi Pesan?</div>
+          <div class="radioContainer">
+            <label id="enkripsi-radio1" class="radio checked">&nbsp;&nbsp;Ya&nbsp;&nbsp;
+              <input type="radio" onclick="check(1, 2)" name="enkripsi" value="1" checked="checked">
+            </label>
+            <label id="enkripsi-radio2" class="radio">&nbsp;&nbsp;Tidak&nbsp;&nbsp;
+              <input type="radio" onclick="check(2, 2)" name="enkripsi" value="2">
+            </label>
+          </div>
+        </div>
+
+        <div class="hidden" id="frame">
+          <div class="subtitle">Pilih Metode Penyisipan Frame</div>
+          <div class="radioContainer">
+            <label id="frame-radio1" class="radio checked">&nbsp;&nbsp;Sekuensial&nbsp;&nbsp;
+              <input type="radio" onclick="check(1, 3)" name="frame" value="1" checked="checked">
+            </label>
+            <label id="frame-radio2" class="radio">&nbsp;&nbsp;Acak&nbsp;&nbsp;
+              <input type="radio" onclick="check(2, 3)" name="frame" value="2">
+            </label>
+          </div>
+        </div>
+
+        <div class="hidden" id="pixel">
+          <div class="subtitle">Pilih Metode Penyisipan Pixel</div>
+          <div class="radioContainer">
+            <label id="pixel-radio1" class="radio checked">&nbsp;&nbsp;Sekuensial&nbsp;&nbsp;
+              <input type="radio" onclick="check(1, 4)" name="pixel" value="1" checked="checked">
+            </label>
+            <label id="pixel-radio2" class="radio">&nbsp;&nbsp;Acak&nbsp;&nbsp;
+              <input type="radio" onclick="check(2, 4)" name="pixel" value="2">
+            </label>
+          </div>
+        </div>
+
+        <div class="hidden" id="kunci">
+          <div class="subtitle">Masukkan Kunci <span style="color: grey">(Panjang maksimal 25 karakter)</span></div>
+          <input type="text" class="form-control" name="kunci" placeholder="secretkey" maxlength="25" />
+        </div>
+
+        <input id="submit" type="submit" class="card upload submit hidden" value="Sisipkan Pesan">
+
+      </form>
+    </div>
+
+    <div class="row">
+      <div id="results" class="subtitle">After</div>
+      <br /><div id="loading" class="subtitle">Loading...</div>
+      <br /><div id="error" class="subtitle error">Error</div>
+      <img id="result" class="card" src="">
+      <div id="result2" class="subtitle ress"></div>
+    </div>
+  </div>
+
+  </div>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+  
+  $("#loading").hide();
+  $("#results").hide();
+  $("#result").hide();
+  $("#error").hide();
+  $("#result2").hide();
+
+  var loadFile = function(event) {
+    document.getElementById('outputbef').classList.remove("hidden");
+
+    var file = event.target.files[0];
+    var name = document.getElementById('name');
+    var size = document.getElementById('size');
+    name.innerHTML = file.name;
+    size.innerHTML = file.size + ' bytes';
+
+    document.getElementById('lsbit').classList.remove("hidden");
+    document.getElementById('enkripsi').classList.remove("hidden");
+    document.getElementById('frame').classList.remove("hidden");
+    document.getElementById('pixel').classList.remove("hidden");
+    document.getElementById('kunci').classList.remove("hidden");
+    document.getElementById('submit').classList.remove("hidden");
+    document.getElementById('msg').classList.remove("hidden");
+  };
+
+  var loadMsg = function(event) {
+    document.getElementById('outputbefmsg').classList.remove("hidden");
+    var file = event.target.files[0];
+    var name = document.getElementById('msg-name');
+    var size = document.getElementById('msg-size');
+    name.innerHTML = file.name;
+    size.innerHTML = file.size + ' bytes';
+    console.log();
+    $('#msg-icon').attr('src', '/static/icon/' + file.name.split('.').pop() + '.png');
+    $('#msg-icon').attr('alt', file.name.split('.').pop());
+  };
+
+  var opt = [1, 1, 1, 1];
+
+  var check = function(id, op) {
+    var text;
+    if (op == 1) {
+      text = 'lsbit-';
+    } else if (op == 2) {
+      text = 'enkripsi-';
+    } else if (op == 3) {
+      text = 'frame-';
+    } else if (op == 4) {
+      text = 'pixel-';
+    }
+    var radio = document.getElementById(text + 'radio' + opt[op-1]).classList.remove("checked");
+    var radio = document.getElementById(text + 'radio' + id).classList.add("checked");
+    opt[op-1] = id;
+  };
+
+  $('#submit').click(function() {
+    var formData = new FormData($('form')[0]);
+    console.log(formData);
+    $.ajax({
+      url: '/video/embed',
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      beforeSend: function() {
+        $("#results").hide();
+        $("#error").hide();
+        $("#loading").show();
+        $("#submit").prop('disabled', true);
+      },
+      success: function(response) {
+        $("#results").show();
+        $("#loading").hide();
+        $("#error").hide();
+        $("#submit").prop('disabled', false);
+        $("#result").show();
+        $('#result').attr('src', JSON.parse(response).url_after);
+        $("#result2").show();
+        $("#result2").text(JSON.parse(response).res);
+      },
+      error: function(error) {
+        $("#results").show();
+        $("#error").show();
+        $("#loading").hide();
+        $("#result2").hide();
+        $("#submit").prop('disabled', false);
+      }
+    });
+  });
+
+</script>
+</html> 

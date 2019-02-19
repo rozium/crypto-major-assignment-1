@@ -45,10 +45,10 @@ def extract_message(stego_file, message_file, key=None):
     chunks = message_bytes.split(terminal)
     write_message_bytes(message_file + chunks[1].decode('utf-8'), chunks[0])
 
-audio_file = '../input/audio/04stereo.wav'
-message_file = '../input/message/ptx01.mp3'
-stego_file = '../output/audio/stego04ran.wav'
-ext_message_file = '../output/message/ext_ptx'
+audio_file = 'static/example/wav/1.wav'
+message_file = 'static/example/message/msg.txt'
+stego_file = 'static/example/wav/1_output.wav'
+ext_message_file = 'static/example/wav/1_output_ex'
 key = 'vinjerdim'
 
 if insert_message(audio_file, message_file, stego_file, True, True, key):

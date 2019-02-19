@@ -12,12 +12,49 @@ app.config['ROOT_PATH'] = app.root_path
 def main():
     return render_template('index.html')
 
+@app.route("/audio", methods=['GET'])
+def audioGET():
+    return render_template('audio_option.html')
+
+@app.route("/audio/extract", methods=['GET'])
+def audioExtractGET():
+    return render_template('audio_embed.html')
+
+@app.route("/audio/extract", methods=['POST'])
+def audioExtractPOST():
+    if 'imgFile' not in request.files:
+        return json.dumps({'status':'Error1'})
+    return json.dumps({'status':'success'})
+
+@app.route("/audio/embed", methods=['GET'])
+def audioEmbedGET():
+    return render_template('audio_embed.html')
+
+@app.route("/audio/embed", methods=['POST'])
+def audioEmbedPOST():
+    if 'imgFile' not in request.files:
+        return json.dumps({'status':'Error1'})
+
 @app.route("/video", methods=['GET'])
 def videoGET():
-    return render_template('video.html')
+    return render_template('video_option.html')
 
-@app.route("/video", methods=['POST'])
-def videoPOST():
+@app.route("/video/extract", methods=['GET'])
+def videoExtractGET():
+    return render_template('video_embed.html')
+
+@app.route("/video/extract", methods=['POST'])
+def videoExtractPOST():
+    if 'imgFile' not in request.files:
+        return json.dumps({'status':'Error1'})
+    return json.dumps({'status':'success'})
+
+@app.route("/video/embed", methods=['GET'])
+def videoEmbedGET():
+    return render_template('video_embed.html')
+
+@app.route("/video/embed", methods=['POST'])
+def videoEmbedPOST():
     if 'imgFile' not in request.files:
         return json.dumps({'status':'Error1'})
     file = request.files['imgFile']
@@ -53,10 +90,6 @@ def videoPOST():
     # plt.savefig(app.root_path + '/' + 'static/images/plot.png')
     # return json.dumps({'url_after': 'static/images/plot.png?' + str(time.time()) })
     return json.dumps({'status':'success'})
-
-@app.route("/audio", methods=['GET'])
-def audioGET():
-    return render_template('audio.html')
 
 @app.route("/audio", methods=['POST'])
 def audioPOST():
