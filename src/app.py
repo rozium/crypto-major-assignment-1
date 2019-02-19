@@ -76,7 +76,7 @@ def videoExtractPOST():
 
     return json.dumps({
         'error': False,
-        'msg_file': output_path + msg_file,
+        'msg_file': output_path + msg_file + '?' + str(time.time()),
         'msg_ext': msg_ext
     })
 
