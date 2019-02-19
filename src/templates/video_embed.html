@@ -119,6 +119,15 @@
       margin-right: 15px;
     }
 
+    .error {
+      margin: 10px;
+      color: red;
+    }
+
+    .videoo {
+      height: auto;
+    }
+
   </style>
 </head>
 <body>
@@ -129,6 +138,7 @@
       </div>
     </div>
     <div class="row">
+
       <form class="form">
         
         <div>
@@ -182,7 +192,7 @@
               <input type="radio" onclick="check(1, 2)" name="enkripsi" value="1" checked="checked">
             </label>
             <label id="enkripsi-radio2" class="radio">&nbsp;&nbsp;Tidak&nbsp;&nbsp;
-              <input type="radio" onclick="check(2, 2)" name="enkripsi" value="2">
+              <input type="radio" onclick="check(2, 2)" name="enkripsi" value="0">
             </label>
           </div>
         </div>
@@ -191,10 +201,10 @@
           <div class="subtitle">Pilih Metode Penyisipan Frame</div>
           <div class="radioContainer">
             <label id="frame-radio1" class="radio checked">&nbsp;&nbsp;Sekuensial&nbsp;&nbsp;
-              <input type="radio" onclick="check(1, 3)" name="frame" value="1" checked="checked">
+              <input type="radio" onclick="check(1, 3)" name="frame" value="0" checked="checked">
             </label>
             <label id="frame-radio2" class="radio">&nbsp;&nbsp;Acak&nbsp;&nbsp;
-              <input type="radio" onclick="check(2, 3)" name="frame" value="2">
+              <input type="radio" onclick="check(2, 3)" name="frame" value="1">
             </label>
           </div>
         </div>
@@ -203,16 +213,16 @@
           <div class="subtitle">Pilih Metode Penyisipan Pixel</div>
           <div class="radioContainer">
             <label id="pixel-radio1" class="radio checked">&nbsp;&nbsp;Sekuensial&nbsp;&nbsp;
-              <input type="radio" onclick="check(1, 4)" name="pixel" value="1" checked="checked">
+              <input type="radio" onclick="check(1, 4)" name="pixel" value="0" checked="checked">
             </label>
             <label id="pixel-radio2" class="radio">&nbsp;&nbsp;Acak&nbsp;&nbsp;
-              <input type="radio" onclick="check(2, 4)" name="pixel" value="2">
+              <input type="radio" onclick="check(2, 4)" name="pixel" value="1">
             </label>
           </div>
         </div>
 
         <div class="hidden" id="kunci">
-          <div class="subtitle">Masukkan Kunci <span style="color: grey">(Panjang maksimal 25 karakter)</span></div>
+          <div class="subtitle">Masukkan Kunci <span style="color: grey; font-weight: 100">(Panjang maksimal 25 karakter)</span></div>
           <input type="text" class="form-control" name="kunci" placeholder="secretkey" maxlength="25" />
         </div>
 
@@ -222,11 +232,26 @@
     </div>
 
     <div class="row">
-      <div id="results" class="subtitle">After</div>
       <br /><div id="loading" class="subtitle">Loading...</div>
-      <br /><div id="error" class="subtitle error">Error</div>
-      <img id="result" class="card" src="">
-      <div id="result2" class="subtitle ress"></div>
+      <br /><div id="error" class="error">Error</div>
+      <div id="success">
+        <div id="cover-video-sub" class="subtitle">Cover Video</div>
+        <div class="card videoo">
+          <video id="cv" controls style="width: 100%">
+            <source id="cover-video" src="" type="video/mp4">
+            Your browser does not support HTML5 video.
+          </video>
+        </div>
+        <div id="stego-video-sub" class="subtitle">Stego Video</div>
+        <div class="card videoo">
+          <video id="sv" controls style="width: 100%">
+            <source id="stego-video" src="" type="video/mp4">
+            Your browser does not support HTML5 video.
+          </video>
+        </div>
+        <div id="PSNR" class="subtitle">PSNR: </div>
+        <a id="stego-video-download" class="download" download">Download Stego Video</a>
+      </div>
     </div>
   </div>
 
@@ -236,10 +261,8 @@
 <script>
   
   $("#loading").hide();
-  $("#results").hide();
-  $("#result").hide();
   $("#error").hide();
-  $("#result2").hide();
+  $("#success").hide();
 
   var loadFile = function(event) {
     document.getElementById('outputbef').classList.remove("hidden");
@@ -289,9 +312,14 @@
     opt[op-1] = id;
   };
 
+  function changeSource(id, url) {
+    var video = document.getElementById(id);
+    video.src = url;
+    video.load();
+  }
+
   $('#submit').click(function() {
     var formData = new FormData($('form')[0]);
-    console.log(formData);
     $.ajax({
       url: '/video/embed',
       type: 'POST',
@@ -299,27 +327,38 @@
       processData: false,
       contentType: false,
       beforeSend: function() {
-        $("#results").hide();
-        $("#error").hide();
         $("#loading").show();
+        $("#error").hide();
+        $("#success").hide();
         $("#submit").prop('disabled', true);
       },
       success: function(response) {
-        $("#results").show();
-        $("#loading").hide();
-        $("#error").hide();
+        console.log(response);
         $("#submit").prop('disabled', false);
-        $("#result").show();
-        $('#result').attr('src', JSON.parse(response).url_after);
-        $("#result2").show();
-        $("#result2").text(JSON.parse(response).res);
+        $("#loading").hide();
+
+        if (JSON.parse(response).error) {
+          $("#error").show();
+          $("#error").html('<b>Error:</b> ' + JSON.parse(response).data);
+          $("#success").hide();  
+        } else {
+          $("#error").hide();
+          $("#success").show();
+          changeSource('cover-video', JSON.parse(response).cover_video_mp4);
+          changeSource('stego-video', JSON.parse(response).stego_video_mp4);
+          // $('#cover-video').attr('src', JSON.parse(response).cover_video_mp4);
+          // $('#stego-video').attr('src', JSON.parse(response).stego_video_mp4);
+          // document.getElementById('cv').play();
+          // document.getElementById('sv').play();
+          $('#stego-video-download').attr('href', JSON.parse(response).stego_video);
+          $("#PSNR").html('Kualitas Video (PSNR): ' + JSON.parse(response).psnr + ' dB');
+        }
       },
       error: function(error) {
-        $("#results").show();
-        $("#error").show();
-        $("#loading").hide();
-        $("#result2").hide();
         $("#submit").prop('disabled', false);
+        $("#error").show();
+        $("#success").hide();
+        $("#loading").hide();
       }
     });
   });

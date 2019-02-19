@@ -1,6 +1,5 @@
 import numpy as np
-import ffmpeg, os, uuid, shutil, subprocess, random
-from vigenere import *
+import ffmpeg, os, uuid, shutil, subprocess, random, vigenere
 from PIL import Image
 from math import log, log10, sqrt
 
@@ -11,11 +10,14 @@ class LSB:
     # cover object related
     self.cover_object = None
     self.cover_object_path = "../example/avi/drop.avi"
+    self.cover_object_audio_path = "../example/avi/cover.aac"
+    self.cover_object_framerate = 0
     # stego object related
     self.stego_object_type = "video" # ["video", "audio"]
     self.stego_object = None
     self.stego_key = None
     self.stego_object_path = "../example/avi/output.avi"
+    self.stego_object_temp_path = "../example/avi/output_temp.avi"
     self.png_frame_path = "../tmp"
     # message related
     self.message = ""
@@ -38,6 +40,24 @@ class LSB:
     # load cover / stego object video and save to self.cover_object / self.stego_object as array of image (rgb)
     if object_type == 'cover':
       path = self.cover_object_path
+      # get framerate
+      command = [ 'ffprobe',
+        '-v', 'error',
+        '-select_streams', 'v:0',
+        '-show_entries', 'stream=r_frame_rate',
+        '-of', 'csv=s=x:p=0',
+        path]
+      cmd_out, cmd_error = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()
+      frame_speed, divisor = cmd_out.split("/")
+      self.cover_object_framerate = int(frame_speed) / int(divisor)
+
+      # extract audio from video
+      command = [ 'ffmpeg',
+        '-i', self.cover_object_path,
+        '-y',
+        self.cover_object_audio_path ]
+      retcode = subprocess.call(command)
+
     else:
       path = self.stego_object_path
 
@@ -85,14 +105,14 @@ class LSB:
     # format : (1 + m) bytes, length of message : (1 + n) bytes
     # (3) get string of bit from message file content and save to self.message
     # (4) append (1) and (2) and save to self.additional_message
-    
+
     # open file
     with open(self.message_path, mode='rb') as file:
       file_content = file.read()
 
     # encrypt message
     if self.is_message_encrypted:
-      file_content = encrypt(file_content, self.key)
+      file_content = vigenere.encrypt(file_content, self.key)
 
     # read as 8 bits per character
     content = ''
@@ -147,6 +167,19 @@ class LSB:
       image.save(unique_dirname + "/frame%d.png" % count)
       count += 1
 
+  def convert_to_mp4(self, object_type, mp4_path):
+    # helper function, convert avi to mp4 for web player
+    if object_type == "cover":
+      input_path = self.cover_object_path
+    else: # object_type == "stego"
+      input_path = self.stego_object_path
+
+    command = [ 'ffmpeg',
+      '-i', input_path,
+      '-y',
+      mp4_path ]
+    retcode = subprocess.call(command)
+
   def save_stego_object(self):
     # convert self.stego_object to png files (contains message) and convert to video
 
@@ -155,14 +188,29 @@ class LSB:
 
     # convert to video
     command = [ 'ffmpeg',
-        '-y',
+        '-r', str(self.cover_object_framerate),
         '-i', self.png_frame_path + "/frame%d.png",
-        '-vcodec', 'png',
-        self.stego_object_path ]
+        '-vcodec', 'ffv1',
+        '-y',
+        self.stego_object_temp_path ]
     retcode = subprocess.call(command)
 
     # delete unused dir / png files
     shutil.rmtree(self.png_frame_path)
+
+    # add cover object audio to output video
+    command2 = [ 'ffmpeg',
+        '-i', self.stego_object_temp_path,
+        '-i', self.cover_object_audio_path,
+        '-y',
+        '-vcodec', 'copy',
+        '-acodec', 'copy',
+        self.stego_object_path ]
+    retcode2 = subprocess.call(command2)
+
+    # delete temp video and extracted audio
+    os.remove(self.stego_object_temp_path)
+    os.remove(self.cover_object_audio_path)
 
   def generate_stego_key(self):
     count = 0
@@ -325,7 +373,7 @@ class LSB:
 
     # decrypt message
     if self.is_message_encrypted:
-      result = decrypt(result, self.key)
+      result = vigenere.decrypt(result, self.key)
 
     # save as file
     filepath = self.message_output_path + self.message_output_filename + "." + self.message_file_format
