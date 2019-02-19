@@ -12,6 +12,7 @@ class LSB:
     self.cover_object_path = "../example/avi/drop.avi"
     self.cover_object_audio_path = "../example/avi/cover.aac"
     self.cover_object_framerate = 0
+    self.is_cover_object_has_audio = True
     # stego object related
     self.stego_object_type = "video" # ["video", "audio"]
     self.stego_object = None
@@ -51,12 +52,26 @@ class LSB:
       frame_speed, divisor = cmd_out.split("/")
       self.cover_object_framerate = int(frame_speed) / int(divisor)
 
+      # check whether video has audio or not
+      command = [ 'ffprobe',
+        '-i', path,
+        '-show_streams',
+        '-select_streams', 'a',
+        '-loglevel', 'error'
+        ]
+      cmd_out, cmd_error = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()
+      if len(cmd_out) == 0:
+        self.is_cover_object_has_audio = False
+      else:
+        self.is_cover_object_has_audio = True
+
       # extract audio from video
-      command = [ 'ffmpeg',
-        '-i', self.cover_object_path,
-        '-y',
-        self.cover_object_audio_path ]
-      retcode = subprocess.call(command)
+      if self.is_cover_object_has_audio:
+        command = [ 'ffmpeg',
+          '-i', self.cover_object_path,
+          '-y',
+          self.cover_object_audio_path ]
+        retcode = subprocess.call(command)
 
     else:
       path = self.stego_object_path
@@ -187,30 +202,33 @@ class LSB:
     self.__stego_frame_to_png()
 
     # convert to video
+    output_path = self.stego_object_temp_path if self.is_cover_object_has_audio else self.stego_object_path
+
     command = [ 'ffmpeg',
         '-r', str(self.cover_object_framerate),
         '-i', self.png_frame_path + "/frame%d.png",
         '-vcodec', 'ffv1',
         '-y',
-        self.stego_object_temp_path ]
+        output_path ]
     retcode = subprocess.call(command)
-
+    
     # delete unused dir / png files
     shutil.rmtree(self.png_frame_path)
 
     # add cover object audio to output video
-    command2 = [ 'ffmpeg',
-        '-i', self.stego_object_temp_path,
-        '-i', self.cover_object_audio_path,
-        '-y',
-        '-vcodec', 'copy',
-        '-acodec', 'copy',
-        self.stego_object_path ]
-    retcode2 = subprocess.call(command2)
+    if self.is_cover_object_has_audio:
+      command2 = [ 'ffmpeg',
+          '-i', self.stego_object_temp_path,
+          '-i', self.cover_object_audio_path,
+          '-y',
+          '-vcodec', 'copy',
+          '-acodec', 'copy',
+          self.stego_object_path ]
+      retcode2 = subprocess.call(command2)
+      # delete temp video and extracted audio
+      os.remove(self.stego_object_temp_path)
+      os.remove(self.cover_object_audio_path)
 
-    # delete temp video and extracted audio
-    os.remove(self.stego_object_temp_path)
-    os.remove(self.cover_object_audio_path)
 
   def generate_stego_key(self):
     count = 0
