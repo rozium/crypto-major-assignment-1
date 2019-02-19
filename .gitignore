@@ -1,3 +1,6 @@
 # python cache
 *.pyc
 src/static/output/*
+.vscode/
+input/
+output/

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 from audio_io import *
 
 # return array of bits from a message

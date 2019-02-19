@@ -7,19 +7,19 @@ def create_seed(key):
     return sum([ord(i) for i in key])
 
 def insert_message(audio_file, message_file, stego_file, encrypted=False, randomized=False, key=None):
-    message_extension = str.encode(get_message_extension(message_file))
+    message_extension = get_message_extension(message_file)
     message_bytes = read_message_bytes(message_file)
     message_bytes = message_bytes + terminal + message_extension + terminal
 
     if (len(message_bytes) + 1 < get_audio_capacity(audio_file)):
         audio_bytes = read_audio_bytes(audio_file)
         audio_params = get_audio_params(audio_file)
-
+        
         flag = 0
         flag = flag | 1 if encrypted else flag
         flag = flag | 2 if randomized else flag
 
-        audio_bytes = put_flag(audio_bytes, bytes([flag]))
+        audio_bytes = put_flag(audio_bytes, bytearray([flag]))
         message_bits = bytes_to_bits(message_bytes)
         if randomized:
             random.seed(create_seed(key))
@@ -27,8 +27,8 @@ def insert_message(audio_file, message_file, stego_file, encrypted=False, random
         else:
             indexes = range(8, 8 + len(message_bits))
         audio_bytes = put_message(audio_bytes, message_bits, indexes)
-        write_audio_bytes(stego_file, audio_bytes, audio_params)
-        return True
+        # write_audio_bytes(stego_file, audio_bytes, audio_params)
+        return audio_bytes
     else:
         return False
 
@@ -45,15 +45,24 @@ def extract_message(stego_file, message_file, key=None):
     chunks = message_bytes.split(terminal)
     write_message_bytes(message_file + chunks[1].decode('utf-8'), chunks[0])
 
-# audio_file = 'static/example/wav/1.wav'
-# message_file = 'static/example/message/msg.txt'
-# stego_file = 'static/example/wav/1_output.wav'
-# ext_message_file = 'static/example/wav/1_output_ex'
-# key = 'vinjerdim'
+audio_file = '../input/audio/04stereo.wav'
+message_file = '../input/message/index.php'
+stego_file = '../output/audio/stego04ran.wav'
+ext_message_file = '../output/message/ext_index'
+key = 'vinjerdim'
+
+# message_bytes = read_message_bytes(message_file)
+# print(bytes_to_bits(message_bytes))
 
 # if insert_message(audio_file, message_file, stego_file, True, True, key):
 #     print('Success')
 #     extract_message(stego_file, ext_message_file, key)
-#   stego_extract(stego_file, ext_message_file, None)
 # else:
 #   print('Message is to big')
+audio_bytes = insert_message(audio_file, message_file, stego_file, True, False, key)
+flag = get_flag(audio_bytes)
+indexes = range(8, len(audio_bytes))
+message_bytes = get_message(audio_bytes, indexes)
+print(message_bytes.split(terminal)[0])
+
+print(bin(256))

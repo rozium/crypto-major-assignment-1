@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import os.path
 import wave
 
@@ -24,13 +24,13 @@ def read_message_bytes(filename):
   message_file = open(filename, 'rb')
   message_bytes = message_file.read()
   message_file.close()
-  return message_bytes
+  return bytearray(message_bytes)
 
 def get_message_size(filename):
   return len(read_message_bytes(filename))
 
 def get_message_extension(filename):
-  return os.path.splitext(filename)[1]
+  return bytearray(os.path.splitext(filename)[1])
 
 def write_audio_bytes(filename, audio_bytes, audio_params):
   with wave.open(filename, 'wb') as output_file:
