@@ -45,15 +45,15 @@ def extract_message(stego_file, message_file, key=None):
     chunks = message_bytes.split(terminal)
     write_message_bytes(message_file + chunks[1].decode('utf-8'), chunks[0])
 
-audio_file = 'static/example/wav/1.wav'
-message_file = 'static/example/message/msg.txt'
-stego_file = 'static/example/wav/1_output.wav'
-ext_message_file = 'static/example/wav/1_output_ex'
-key = 'vinjerdim'
+# audio_file = 'static/example/wav/1.wav'
+# message_file = 'static/example/message/msg.txt'
+# stego_file = 'static/example/wav/1_output.wav'
+# ext_message_file = 'static/example/wav/1_output_ex'
+# key = 'vinjerdim'
 
-if insert_message(audio_file, message_file, stego_file, True, True, key):
-    print('Success')
-    extract_message(stego_file, ext_message_file, key)
+# if insert_message(audio_file, message_file, stego_file, True, True, key):
+#     print('Success')
+#     extract_message(stego_file, ext_message_file, key)
 #   stego_extract(stego_file, ext_message_file, None)
 # else:
 #   print('Message is to big')
