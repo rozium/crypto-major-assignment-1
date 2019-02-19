@@ -1,5 +1,6 @@
 import numpy as np
 import ffmpeg, os, uuid, shutil, subprocess, random
+from vigenere import *
 from PIL import Image
 from math import log, log10, sqrt
 
@@ -84,15 +85,14 @@ class LSB:
     # format : (1 + m) bytes, length of message : (1 + n) bytes
     # (3) get string of bit from message file content and save to self.message
     # (4) append (1) and (2) and save to self.additional_message
-    # TODO: encrypt message
-
+    
     # open file
     with open(self.message_path, mode='rb') as file:
       file_content = file.read()
 
     # encrypt message
-    # if self.is_message_encrypted:
-      # file_content = encrypt(file_content)
+    if self.is_message_encrypted:
+      file_content = encrypt(file_content, self.key)
 
     # read as 8 bits per character
     content = ''
@@ -311,7 +311,6 @@ class LSB:
     return used_pixel
 
   def get_message(self):
-    # TODO: decrypt message
     # extract message form self.stego_object and save as file
 
     # extract additional message first
@@ -325,8 +324,8 @@ class LSB:
       result += chr(int(byte, 2))
 
     # decrypt message
-    # if self.is_message_encrypted:
-      # result = decrypt(result)
+    if self.is_message_encrypted:
+      result = decrypt(result, self.key)
 
     # save as file
     filepath = self.message_output_path + self.message_output_filename + "." + self.message_file_format
