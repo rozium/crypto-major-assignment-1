@@ -4,3 +4,5 @@ src/static/output/*
 .vscode/
 input/
 output/
+src/templates/.fuse_hidden*
+src/.fuse_hidden*
