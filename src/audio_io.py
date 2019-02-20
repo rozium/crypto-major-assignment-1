@@ -30,7 +30,8 @@ def get_message_size(filename):
   return len(read_message_bytes(filename))
 
 def get_message_extension(filename):
-  return bytearray(os.path.splitext(filename)[1])
+  print os.path.splitext(filename)[1]
+  return bytearray(str(os.path.splitext(filename)[1]))
 
 def write_audio_bytes(filename, audio_bytes, audio_params):
   with wave.open(filename, 'wb') as output_file:

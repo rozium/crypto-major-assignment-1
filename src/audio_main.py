@@ -45,24 +45,24 @@ def extract_message(stego_file, message_file, key=None):
     chunks = message_bytes.split(terminal)
     write_message_bytes(message_file + chunks[1].decode('utf-8'), chunks[0])
 
-audio_file = '../input/audio/04stereo.wav'
-message_file = '../input/message/index.php'
-stego_file = '../output/audio/stego04ran.wav'
-ext_message_file = '../output/message/ext_index'
-key = 'vinjerdim'
+# audio_file = '../input/audio/04stereo.wav'
+# message_file = '../input/message/index.php'
+# stego_file = '../output/audio/stego04ran.wav'
+# ext_message_file = '../output/message/ext_index'
+# key = 'vinjerdim'
 
-# message_bytes = read_message_bytes(message_file)
-# print(bytes_to_bits(message_bytes))
+# # message_bytes = read_message_bytes(message_file)
+# # print(bytes_to_bits(message_bytes))
 
-# if insert_message(audio_file, message_file, stego_file, True, True, key):
-#     print('Success')
-#     extract_message(stego_file, ext_message_file, key)
-# else:
-#   print('Message is to big')
-audio_bytes = insert_message(audio_file, message_file, stego_file, True, False, key)
-flag = get_flag(audio_bytes)
-indexes = range(8, len(audio_bytes))
-message_bytes = get_message(audio_bytes, indexes)
-print(message_bytes.split(terminal)[0])
+# # if insert_message(audio_file, message_file, stego_file, True, True, key):
+# #     print('Success')
+# #     extract_message(stego_file, ext_message_file, key)
+# # else:
+# #   print('Message is to big')
+# audio_bytes = insert_message(audio_file, message_file, stego_file, True, False, key)
+# flag = get_flag(audio_bytes)
+# indexes = range(8, len(audio_bytes))
+# message_bytes = get_message(audio_bytes, indexes)
+# print(message_bytes.split(terminal)[0])
 
-print(bin(256))
+# print(bin(256))

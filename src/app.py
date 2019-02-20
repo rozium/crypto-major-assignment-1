@@ -23,9 +23,30 @@ def audioExtractGET():
 
 @app.route("/audio/extract", methods=['POST'])
 def audioExtractPOST():
-    if 'imgFile' not in request.files:
-        return json.dumps({'status':'Error1'})
-    return json.dumps({'status':'success'})
+    
+    # check file
+    if 'file' not in request.files:
+        return json.dumps({
+            'error': True,
+            'data': 'Stego Audio tidak ditemukan',
+        })
+
+    # save file
+    file = request.files['file']
+    filepath = app.root_path + output_path
+    file.save(filepath + file.filename)
+
+    # extract file
+    audio_bytes = read_audio_bytes(filepath + file.filename)
+    flag = get_flag(audio_bytes)
+    indexes = range(8, len(audio_bytes))
+    msg_bytes = get_message(audio_bytes, indexes)
+
+    return json.dumps({
+        'error': False,
+        'msg_file': output_path + 'message.txt' + '?' + str(time.time()),
+        'msg_ext': 'txt'
+    })
 
 @app.route("/audio/embed", methods=['GET'])
 def audioEmbedGET():
@@ -63,24 +84,30 @@ def audioEmbedPOST():
     # embed file
 
     # config stego info
-    # audio_file = filepath + file.filename
-    # message_file = filepath + msg_file.filename
+    audio_file = filepath + file.filename
+    message_file = filepath + msg_file.filename
 
-    # stego_file = filepath + 'out_' + file.filename
-    # ext_message_file = filepath + 'ex_out_' + file.filename
+    stego_file = filepath + 'out_' + file.filename
+    ext_message_file = filepath + 'ex_out_' + file.filename
 
-    # key = request.form.get('kunci') or 'secretkey'
+    encrypted = True if int(request.form.get('enkripsi')) else False
+    randomized = True if int(request.form.get('method')) else False
+    key = request.form.get('kunci') or 'secretkey'
 
-    # if not insert_message(audio_file, message_file, stego_file, True if int(request.form.get('enkripsi')) else False, True if int(request.form.get('method')) else False, key):
-    #     return json.dumps({
-    #         'error': True,
-    #         'data': 'Panjang pesan tidak boleh melibihi panjang cover video!',
-    #     })
+    print '[LOG] insert message with encrypted:', encrypted
+    print '[LOG] insert message with randomized:', randomized
+    print '[LOG] insert message with key:', key
+
+    if not insert_message(audio_file, message_file, stego_file, encrypted, randomized, key):
+        return json.dumps({
+            'error': True,
+            'data': 'Terjadi kesalahan pada sistem!',
+        })
 
     return json.dumps({
         'error': False,
         'cover_audio': output_path + file.filename + '?' + str(time.time()),
-        'stego_audio': output_path + file.filename + '?' + str(time.time()),
+        'stego_audio': output_path + 'out_' + file.filename + '?' + str(time.time()),
         # 'stego_audio': output_path + 'out_' + file.filename + '?' + str(time.time()),
         'psnr': 90,
     })
