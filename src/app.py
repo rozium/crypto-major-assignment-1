@@ -37,15 +37,14 @@ def audioExtractPOST():
     file.save(filepath + file.filename)
 
     # extract file
-    audio_bytes = read_audio_bytes(filepath + file.filename)
-    flag = get_flag(audio_bytes)
-    indexes = range(8, len(audio_bytes))
-    msg_bytes = get_message(audio_bytes, indexes)
+    key = request.form.get('kunci') or 'secretkey'
+    output = filepath + 'output'
+    ext = str(extract_message(filepath + file.filename, output, key))
 
     return json.dumps({
         'error': False,
-        'msg_file': output_path + 'message.txt' + '?' + str(time.time()),
-        'msg_ext': 'txt'
+        'msg_file': output_path + 'output' + ext + '?' + str(time.time()),
+        'msg_ext': ext
     })
 
 @app.route("/audio/embed", methods=['GET'])

@@ -175,17 +175,6 @@
     document.getElementById('submit').classList.remove("hidden");
   };
 
-  var loadMsg = function(event) {
-    document.getElementById('outputbefmsg').classList.remove("hidden");
-    var file = event.target.files[0];
-    var name = document.getElementById('msg-name');
-    var size = document.getElementById('msg-size');
-    name.innerHTML = file.name;
-    size.innerHTML = file.size + ' bytes';
-
-  };
-
-
   $('#submit').click(function() {
     var formData = new FormData($('form')[0]);
     $.ajax({
@@ -213,7 +202,7 @@
           $("#error").hide();
           $("#success").show();
           $('#message-file').attr('href', JSON.parse(response).msg_file);
-          $('#result').html('File: output.' + JSON.parse(response).msg_ext);
+          $('#result').html('File: output' + JSON.parse(response).msg_ext);
         }
       },
       error: function(error) {

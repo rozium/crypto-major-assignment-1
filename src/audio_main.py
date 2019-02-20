@@ -88,12 +88,13 @@ def extract_message(stego_file, message_file, key=None):
         message = bytearray(decrypt(str(message), key))
     
     write_message_bytes(str(message_file + extension), message)
+    return extension
 
-audio_file = '../input/audio/01stereo.wav'
-message_file = '../input/message/ktp.jpg'
-stego_file = '../output/audio/stego01seq.wav'
-ext_message_file = '../output/message/ext_ktp'
-key = 'vinjerdim'
+# audio_file = '../input/audio/01stereo.wav'
+# message_file = '../input/message/ktp.jpg'
+# stego_file = '../output/audio/stego01seq.wav'
+# ext_message_file = '../output/message/ext_ktp'
+# key = 'vinjerdim'
 
-insert_message(audio_file, message_file, stego_file, True, True, key)
-extract_message(stego_file, ext_message_file, key)
+# insert_message(audio_file, message_file, stego_file, True, True, key)
+# extract_message(stego_file, ext_message_file, key)
